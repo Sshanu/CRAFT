@@ -1,0 +1,11 @@
+initial_prompts:
+  - prompt.md
+
+aggregation_keys:
+  - macro_f1
+  - weighted_f1
+  - exact_match_accuracy
+
+unique_labels:
+  - invalid
+  - valid

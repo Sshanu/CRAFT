@@ -1,0 +1,11 @@
+initial_prompts:
+  - prompt.md
+
+aggregation_keys:
+  - exact_match_accuracy
+
+unique_labels:
+  - "A"
+  - "B"
+  - "C"
+  - "D"

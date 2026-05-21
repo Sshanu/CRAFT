@@ -1,0 +1,10 @@
+You are acting as a chat completion endpoint. Read the SYSTEM, prior CONVERSATION (if any), and the USER MESSAGE below, and produce a single response that the user would receive from a standard chat completion. Return your full response in the JSON field `response`. Do not add any extra commentary, no markdown wrappers, no preamble or postamble — just the response text the user would see.
+
+=== SYSTEM ===
+{system_prompt}
+
+=== CONVERSATION (prior turns, may be empty) ===
+{history}
+
+=== USER MESSAGE ===
+{user_message}

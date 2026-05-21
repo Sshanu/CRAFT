@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "response": {
+      "type": "string",
+      "description": "The model's full response to the user's request, exactly as it would be returned by a chat completion."
+    }
+  },
+  "required": ["response"],
+  "additionalProperties": false
+}

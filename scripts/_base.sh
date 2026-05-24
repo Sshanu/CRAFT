@@ -60,6 +60,18 @@ if [ "$SCORING_METRIC" = "weighted" ]; then
   WEIGHT_ARGS="selector.score_weight=$SCORE_WGT selector.token_weight=$TOKEN_WGT"
 fi
 
+# Pair UCB acquisition with the selector method. main.py enforces this
+# mapping via _validate_selector_ucb_pairing; hardcoding ucb-mo here would
+# fail-fast for every score/weighted baseline. Override via UCB_TYPE if you
+# really need a non-default pairing.
+case "$SCORING_METRIC" in
+  score|token)        DEFAULT_UCB_TYPE="ucb-e";;
+  weighted)           DEFAULT_UCB_TYPE="ucb-ws";;
+  nsga2|nsga2-lcb)    DEFAULT_UCB_TYPE="ucb-mo";;
+  *)                  DEFAULT_UCB_TYPE="ucb-mo";;
+esac
+UCB_TYPE="${UCB_TYPE:-$DEFAULT_UCB_TYPE}"
+
 # Weights & Biases is off by default; set WANDB_MODE=online to enable.
 export WANDB_MODE="${WANDB_MODE:-disabled}"
 
@@ -77,7 +89,7 @@ PYTHONPATH=src python -m main \
   selector.accuracy_buffer=0.0 selector.token_buffer=0 \
   selector.filter_factor="$FILTER_FACTOR" selector.lambda_factor=1 $WEIGHT_ARGS \
   evaluator.provider="$PROVIDER_EVAL" evaluator.model="$MODEL_EVAL" \
-  evaluator.validation_type=ucb evaluator.ucb_type=ucb-mo \
+  evaluator.validation_type=ucb evaluator.ucb_type="$UCB_TYPE" \
   evaluator.use_stratified_validation=True evaluator.eval_rounds="$EVAL_ROUNDS" \
   evaluator.max_threads="$EVAL_THREADS" \
   enhancer.provider="$PROVIDER" enhancer.model="$MODEL" \

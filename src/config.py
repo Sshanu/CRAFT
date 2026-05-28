@@ -19,7 +19,7 @@ class EnhancerConfig:
     evoprompt_temperature: float = field(default=0.5, metadata={"help": "EvoPrompt: sampling temperature for the DE operator."})
     disable: bool = field(default=False, metadata={"help": "Disable the enhancer."})
     model: str = field(default="gpt4omini", metadata={"help": "Generator model."})
-    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure", "ollama", "codex"]})
+    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure_openai", "azure_inference", "ollama", "codex", "foundry"]})
     reasoning_effort: str = field(default="low", metadata={"help": "Reasoning effort for codex provider; ignored by others. NOTE: 'minimal' is rejected by gpt-5.x in codex-cli 0.130.0 because the built-in image_gen tool requires effort >= low; use 'low' as the practical floor.", "choices": ["minimal", "low", "medium", "high"]})
     service_tier: str = field(default="fast", metadata={"help": "Service tier for codex provider; ignored by others.", "choices": ["fast", "flex"]})
     max_tokens: int = field(default=4000, metadata={"help": "Maximum tokens for generation"})
@@ -64,7 +64,7 @@ class OrchestratorConfig:
     max_tokens: int = field(default=4000, metadata={"help": "Maximum tokens for generation"})
     temperature: float = field(default=0, metadata={"help": "Temperature"})
     top_p: float = field(default=0.01, metadata={"help": "top_p"})
-    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure", "ollama", "codex"]})
+    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure_openai", "azure_inference", "ollama", "codex", "foundry"]})
     reasoning_effort: str = field(default="low", metadata={"help": "Reasoning effort for codex provider; ignored by others. NOTE: 'minimal' is rejected by gpt-5.x in codex-cli 0.130.0 because the built-in image_gen tool requires effort >= low; use 'low' as the practical floor.", "choices": ["minimal", "low", "medium", "high"]})
     service_tier: str = field(default="fast", metadata={"help": "Service tier for codex provider; ignored by others.", "choices": ["fast", "flex"]})
 
@@ -100,7 +100,7 @@ class EvaluatorConfig:
     temperature: float = field(default=0, metadata={"help": "Temperature"})
     top_p: float = field(default=0.01, metadata={"help": "top_p"})
     model: str = field(default="gpt4omini", metadata={"help": "Generator model."})
-    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure", "ollama", "codex"]})
+    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure_openai", "azure_inference", "ollama", "codex", "foundry"]})
     reasoning_effort: str = field(default="low", metadata={"help": "Reasoning effort for codex provider; ignored by others. NOTE: 'minimal' is rejected by gpt-5.x in codex-cli 0.130.0 because the built-in image_gen tool requires effort >= low; use 'low' as the practical floor.", "choices": ["minimal", "low", "medium", "high"]})
     service_tier: str = field(default="fast", metadata={"help": "Service tier for codex provider; ignored by others.", "choices": ["fast", "flex"]})
 
@@ -132,7 +132,7 @@ class CompressorConfig:
     comp_analysis_path: str = field(default="", metadata={"help": "for debugging purposes only."})
     comp_actions: str = field(default="", metadata={"help": "for debugging purposes only."})
     load_structured_prompt_path: str = field(default="", metadata={"help": "for debugging purposes only."})    
-    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure", "ollama", "codex"]})
+    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure_openai", "azure_inference", "ollama", "codex", "foundry"]})
     reasoning_effort: str = field(default="low", metadata={"help": "Reasoning effort for codex provider; ignored by others. NOTE: 'minimal' is rejected by gpt-5.x in codex-cli 0.130.0 because the built-in image_gen tool requires effort >= low; use 'low' as the practical floor.", "choices": ["minimal", "low", "medium", "high"]})
     service_tier: str = field(default="fast", metadata={"help": "Service tier for codex provider; ignored by others.", "choices": ["fast", "flex"]})
 
@@ -146,7 +146,7 @@ class MutatorConfig:
     top_p: float = field(default=0.9, metadata={"help": "top_p for mutation"})
     model: str = field(default="gpt4omini", metadata={"help": "Mutator model."})
     num_mutations: int = field(default=2, metadata={"help": "Number of mutations to generate."})
-    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure", "ollama", "codex"]})
+    provider: str = field(default="azure", metadata={"help": "Provider for LLMs.", "choices": ["openai", "azure_openai", "azure_inference", "ollama", "codex", "foundry"]})
     reasoning_effort: str = field(default="low", metadata={"help": "Reasoning effort for codex provider; ignored by others. NOTE: 'minimal' is rejected by gpt-5.x in codex-cli 0.130.0 because the built-in image_gen tool requires effort >= low; use 'low' as the practical floor.", "choices": ["minimal", "low", "medium", "high"]})
     service_tier: str = field(default="fast", metadata={"help": "Service tier for codex provider; ignored by others.", "choices": ["fast", "flex"]})
 

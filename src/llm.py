@@ -21,8 +21,26 @@ sys.path.append("./")
 AZURE_API_KEY = os.environ.get("AZURE_API_KEY", "<YOUR_AZURE_API_KEY>") # Placeholder
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "<YOUR_OPENAI_API_KEY>") # Placeholder
 
-def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name="gpt-4", history=None, max_tokens=256, temperature=0, top_p=1.0, frequency_penalty=0, presence_penalty=0, retry=5):
-    """Azure LLM completion with proper parameter handling for caching."""
+def azure_llm_completion(sdk_flavor, user_message, system_prompt, model_name="gpt-4", history=None, max_tokens=256, temperature=0, top_p=1.0, frequency_penalty=0, presence_penalty=0, retry=5):
+    """Azure LLM completion.
+
+    Two SDK flavors are supported, both authenticated with AZURE_API_KEY:
+
+    - ``inference`` uses the Azure AI Inference SDK (``ChatCompletionsClient``)
+      against ``AZURE_INFERENCE_ENDPOINT``. Used for deployments that expose
+      models via the unified Azure AI Foundry / Inference API.
+    - ``openai`` uses the Azure OpenAI SDK (``AzureOpenAI``) against
+      ``AZURE_OPENAI_ENDPOINT``. Used for standard Azure OpenAI deployments.
+
+    Pick the flavor by setting the provider field to ``azure_inference`` or
+    ``azure_openai`` in the config (see :func:`run_llm`).
+    """
+    if sdk_flavor not in ("inference", "openai"):
+        raise ValueError(
+            f"Unknown Azure SDK flavor: {sdk_flavor!r}. "
+            "Expected 'inference' (Azure AI Inference SDK) or 'openai' (Azure OpenAI SDK)."
+        )
+
     # Check cache first
     cache = get_cache()
     if cache:
@@ -32,7 +50,7 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
                 user_message=user_message,
                 history=history,
                 model=model_name,
-                provider=f"azure_{endpoint_name}",
+                provider=f"azure_{sdk_flavor}",
                 max_tokens=max_tokens,
                 temperature=temperature,
                 top_p=top_p,
@@ -43,7 +61,8 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
                 return cached_result
         except Exception as e:
             print(f"Warning: Failed to check cache for azure prompt: {e}")
-    if endpoint_name == "mbzuai":
+
+    if sdk_flavor == "inference":
         endpoint = os.environ.get("AZURE_INFERENCE_ENDPOINT", "<YOUR_AZURE_INFERENCE_ENDPOINT>")
         client = ChatCompletionsClient(
             endpoint=endpoint,
@@ -56,9 +75,9 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
                 messages.append(UserMessage(content=turn['User']))
                 messages.append(SystemMessage(content=turn['Assistant'])) # Assuming assistant responses are system messages for history
         messages.append(UserMessage(content=user_message))
-    elif endpoint_name == "personal_openai":
+    else:  # sdk_flavor == "openai"
         endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT", "<YOUR_AZURE_OPENAI_ENDPOINT>")
-        api_version = "2024-12-01-preview"
+        api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
         client = AzureOpenAI(
             api_version=api_version,
             azure_endpoint=endpoint,
@@ -74,7 +93,7 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
     last_exception = None
     for attempt in range(retry):
         try:
-            if endpoint_name == "mbzuai":
+            if sdk_flavor == "inference":
                 response = client.complete(
                     messages=messages,
                     max_tokens=max_tokens,
@@ -84,7 +103,7 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
                     frequency_penalty=frequency_penalty,
                     model=model_name
                 )
-            elif endpoint_name == "personal_openai":
+            else:  # sdk_flavor == "openai"
                 response = client.chat.completions.create(
                     model=model_name,
                     messages=messages,
@@ -95,10 +114,10 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
                     presence_penalty=presence_penalty,
                     n=1,
                     stop=None
-                )   
-            
+                )
+
             result = (user_message, response.choices[0].message.content, response.usage)
-            
+
             # Cache successful result
             if cache and result and len(result) >= 3 and result[1] != "Could not get a response from Azure LLM":
                 try:
@@ -109,7 +128,7 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
                         token_usage=result[2],
                         history=history,
                         model=model_name,
-                        provider=f"azure_{endpoint_name}",
+                        provider=f"azure_{sdk_flavor}",
                         max_tokens=max_tokens,
                         temperature=temperature,
                         top_p=top_p,
@@ -118,7 +137,7 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
                     )
                 except Exception as e:
                     print(f"Warning: Failed to cache Azure result: {e}")
-            
+
             return result
         except Exception as e:
             last_exception = e
@@ -127,7 +146,7 @@ def azure_llm_completion(endpoint_name, user_message, system_prompt, model_name=
                 wait_time = (2 ** attempt) + (attempt * 0.1)  # Exponential backoff with jitter
                 print(f"Retrying in {wait_time:.1f} seconds...")
                 sleep(wait_time)
-    
+
     print(f"Azure LLM failed after {retry} attempts. Last error: {last_exception}")
     return user_message, "Could not get a response from Azure LLM", utils.TokenUsage()
 
@@ -454,14 +473,12 @@ def run_llm(user_message, system_prompt, provider="azure", model="gpt4o", histor
     # Call the appropriate provider function
     result = None
     if provider.lower().startswith("azure"):
-        endpoint_name = provider.split("_", 1)[1] if "_" in provider else ""
-        if endpoint_name == "mbzuai":
-            endpoint_name = "mbzuai"
-        elif endpoint_name == "personal":
-            endpoint_name = "personal_openai"
-        else:
-            raise ValueError(f"Unknown Azure endpoint name: {endpoint_name}")
-        result = azure_llm_completion(endpoint_name, user_message, system_prompt, model, history, max_tokens, temperature, top_p, frequency_penalty, presence_penalty, retry)
+        # Provider naming convention: ``azure_inference`` (Azure AI Inference SDK
+        # via AZURE_INFERENCE_ENDPOINT) or ``azure_openai`` (Azure OpenAI SDK via
+        # AZURE_OPENAI_ENDPOINT). A bare ``azure`` defaults to the OpenAI SDK
+        # flavor since that is the most common Azure deployment.
+        sdk_flavor = provider.split("_", 1)[1] if "_" in provider else "openai"
+        result = azure_llm_completion(sdk_flavor, user_message, system_prompt, model, history, max_tokens, temperature, top_p, frequency_penalty, presence_penalty, retry)
     elif provider.lower() == "openai":
         result = openai_llm_completion(user_message, system_prompt, model, history, max_tokens, temperature, top_p, frequency_penalty, presence_penalty, retry)
     elif provider.lower() == "ollama":

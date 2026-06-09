@@ -106,3 +106,22 @@ hypervolume, IGD, front size).
 - Weights & Biases logging is **off** by default. Set `WANDB_MODE=online` and
   `wandb login` to enable it.
 - LLM responses are cached under `cache/` so re-runs reuse prior calls.
+
+## Citation
+
+If you use CRAFT in your research, please cite:
+
+```bibtex
+@article{kumar2026craft,
+  title={CRAFT: Cost-aware Refinement And Front-aware Tuning of Prompts},
+  author={Kumar, Shanu and Khandelwal, Shubhanshu and Venkata, Akhila Yesantarao and Agrawal, Parag and Kementchedjhieva, Yova and Gupta, Manish},
+  journal={arXiv preprint arXiv:2606.04661},
+  year={2026}
+}
+```
+
+## Contact
+
+Questions, bug reports, or help running CRAFT on a new task — reach out to
+**Shanu Kumar** at [shanu.kumar@mbzuai.ac.ae](mailto:shanu.kumar@mbzuai.ac.ae)
+or open an issue on this repository.
